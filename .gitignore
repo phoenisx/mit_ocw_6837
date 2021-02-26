@@ -1,0 +1,6 @@
+**/Release/
+**/.vs/
+**/lib/
+**/*.exe
+**/*.dll
+**/*.obj
