@@ -1,6 +1,8 @@
 **/Release/
+**/Debug/
 **/.vs/
 **/lib/
 **/*.exe
 **/*.dll
 **/*.obj
+**/*soln
