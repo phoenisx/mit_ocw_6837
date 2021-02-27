@@ -6,6 +6,8 @@
 #include "vecmath.h"
 using namespace std;
 
+const int MAX_BUFFER_SIZE = 1024;
+
 // Globals
 
 // This is the list of points (3D vectors)
@@ -23,6 +25,9 @@ enum COLOR {
     RED, PURPLE, INDIGO, TEAL, END
 };
 COLOR selected_color = RED;
+
+float CAMERA_POS_DELTA[] = { 0.0, 0.0 };
+float CAMERA_POS[] = { 1.0, 1.0, 5.0 };
 
 
 // These are convenience functions which allow us to call OpenGL 
@@ -61,25 +66,34 @@ void specialFunc( int key, int x, int y )
     switch ( key )
     {
     case GLUT_KEY_UP:
-        // add code to change light position
-		cout << "Unhandled key press: up arrow." << endl;
+        CAMERA_POS_DELTA[1] = 0.1f;
 		break;
     case GLUT_KEY_DOWN:
-        // add code to change light position
-		cout << "Unhandled key press: down arrow." << endl;
+        CAMERA_POS_DELTA[1] = -0.1f;
 		break;
     case GLUT_KEY_LEFT:
-        // add code to change light position
-		cout << "Unhandled key press: left arrow." << endl;
+        CAMERA_POS_DELTA[0] = -.1f;
 		break;
     case GLUT_KEY_RIGHT:
-        // add code to change light position
-		cout << "Unhandled key press: right arrow." << endl;
+        CAMERA_POS_DELTA[0] = .1f;
 		break;
     }
 
 	// this will refresh the screen so that the user sees the light position
     glutPostRedisplay();
+}
+
+void drawModel() {
+    glBegin(GL_TRIANGLES);
+    for (auto face : vecf) {
+        glNormal3d(vecn[face[2] - 1][0], vecn[face[2] - 1][1], vecn[face[2] - 1][2]);
+        glVertex3d(vecv[face[0] - 1][0], vecv[face[0] - 1][1], vecv[face[0] - 1][2]);
+        glNormal3d(vecn[face[5] - 1][0], vecn[face[5] - 1][1], vecn[face[5] - 1][2]);
+        glVertex3d(vecv[face[3] - 1][0], vecv[face[3] - 1][1], vecv[face[3] - 1][2]);
+        glNormal3d(vecn[face[8] - 1][0], vecn[face[8] - 1][1], vecn[face[8] - 1][2]);
+        glVertex3d(vecv[face[6] - 1][0], vecv[face[6] - 1][1], vecv[face[6] - 1][2]);
+    }
+    glEnd();
 }
 
 // This function is responsible for displaying the object.
@@ -126,14 +140,14 @@ void drawScene(void)
     // Light color (RGBA)
     GLfloat Lt0diff[] = {1.0,1.0,1.0,1.0};
     // Light position
-	GLfloat Lt0pos[] = {1.0f, 1.0f, 5.0f, 1.0f};
+    CAMERA_POS[0] = CAMERA_POS[0] + CAMERA_POS_DELTA[0];
+    CAMERA_POS[1] = CAMERA_POS[1] + CAMERA_POS_DELTA[1];
+	GLfloat Lt0pos[] = {CAMERA_POS[0], CAMERA_POS[1], CAMERA_POS[2], 1.0f};
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
     glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
 
-	// This GLUT method draws a teapot.  You should replace
-	// it with code which draws the object you loaded.
-	glutSolidTeapot(1.0);
+    drawModel();
     
     // Dump the image to the screen.
     glutSwapBuffers();
@@ -169,7 +183,40 @@ void reshapeFunc(int w, int h)
 
 void loadInput()
 {
-	// load the OBJ file here
+    char buffer[MAX_BUFFER_SIZE];
+    while (cin.getline(buffer, MAX_BUFFER_SIZE).good()) {
+        stringstream ss(buffer);
+        string label;
+        ss >> label;
+
+        if (label == "v") {
+            Vector3f vec;
+            ss >> vec[0] >> vec[1] >> vec[2];
+            vecv.push_back(vec);
+        }
+        else if (label == "vn") {
+            Vector3f vec;
+            ss >> vec[0] >> vec[1] >> vec[2];
+            vecn.push_back(vec);
+        }
+        else if (label == "f") {
+            vector<unsigned> face;
+            string face_values[3];
+
+            ss >> face_values[0] >> face_values[1] >> face_values[2];
+            
+            for (auto value : face_values) {
+                char* _v = &value[0];
+                char* split = strtok(_v, "/");
+                while (split != NULL)
+                {
+                    face.push_back(stoi(split));
+                    split = strtok(NULL, "/");
+                }
+            }
+            vecf.push_back(face);
+        }
+    }
 }
 
 // Main routine.
