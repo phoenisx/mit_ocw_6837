@@ -6,6 +6,8 @@
 #include "vecmath.h"
 using namespace std;
 
+void rotate(int value);
+
 const int MAX_BUFFER_SIZE = 1024;
 
 // Globals
@@ -28,6 +30,8 @@ COLOR selected_color = RED;
 
 float CAMERA_POS_DELTA[] = { 0.0, 0.0 };
 float CAMERA_POS[] = { 1.0, 1.0, 5.0 };
+float ROTATION_ANGLE = 0.0;
+bool should_rotate = false;
 
 
 // These are convenience functions which allow us to call OpenGL 
@@ -37,6 +41,14 @@ inline void glVertex(const Vector3f &a)
 
 inline void glNormal(const Vector3f &a) 
 { glNormal3fv(a); }
+
+void rotate(int value) {
+    if (should_rotate) {
+        ++ROTATION_ANGLE;
+        glutPostRedisplay();
+        glutTimerFunc((unsigned) 1000 / 60, rotate, ROTATION_ANGLE);
+    }
+}
 
 
 // This function is called whenever a "Normal" key press is received.
@@ -50,6 +62,11 @@ void keyboardFunc( unsigned char key, int x, int y )
     case 'c':
         // Change Color on 'c
         selected_color = static_cast<COLOR>(rand() % END);
+        break;
+    case 'r':
+        // Rotate the Modal
+        should_rotate = !should_rotate;
+        rotate(ROTATION_ANGLE);   
         break;
     default:
         cout << "Unhandled key press " << key << "." << endl;        
@@ -146,6 +163,8 @@ void drawScene(void)
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
     glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
+
+    glRotatef(ROTATION_ANGLE, 0, 1, 0);
 
     drawModel();
     
